@@ -3,27 +3,35 @@ from multiprocessing.connection import Client
 import subprocess
 import pickle
 import logging
+import time
+import os
 
-#This should be the path to the python.exe file in the CEpy27 environment set up by conda.
-PYTHON2_PATH = r"C:\Users\UserName\Miniconda3\envs\CEpy27\python.exe"
-
+#Thhis should be the path to the python.exe file in the CEpy27 environment set up by conda.
+WAIT_TIME = 0.075 # Time in seconds to wait between server calls.
+cwd = os.getcwd()
+cwd = cwd.split('\\')
+USER = cwd[2]
+PYTHON2_PATH = r"C:\Users\{}\Miniconda3\envs\CEpy27\python.exe".format(USER)
+SERVER_FILE = r'C:\Users\{}\Documents\Barracuda\BarracudaQt\hardware\MicroControlServer.py'.format(USER)
 class MicroControlClient:
-    authkey = b'a-key-worth-using'
+    authkey = b'barracuda'
     server = None # subprocess.Popen object
     conn = None
-    def __init__(self, port=7651):
+    def __init__(self, port=5030):
         self.address = ('localhost', port)
-        self.start_server()
+        #self.start_server()
 
     def start_connection(self):
         self.conn = Client(self.address, authkey=b'barracuda')
 
     def send_command(self, cmd):
         self.conn.send_bytes(pickle.dumps(cmd, 2))
+        time.sleep(WAIT_TIME)
 
     def read_response(self):
         response = self.conn.recv_bytes()
         response = pickle.loads(response, encoding='bytes')
+        time.sleep(WAIT_TIME)
         return response
 
     def close_server(self):
@@ -37,7 +45,8 @@ class MicroControlClient:
         :return:
         """
         self.server = subprocess.Popen([PYTHON2_PATH,
-                                        'MicroControlServer.py'], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+                                        SERVER_FILE, '{}'.format(self.address[1])], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        time.sleep(1)
     def open(self):
         """ Opens the Python 2 server and starts the connection"""
         if self.conn is None:
