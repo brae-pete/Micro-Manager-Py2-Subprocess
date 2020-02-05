@@ -11,10 +11,25 @@ WAIT_TIME = 0.075 # Time in seconds to wait between server calls.
 cwd = os.getcwd()
 cwd = cwd.split('\\')
 USER = cwd[2]
-PYTHON2_PATH = r"C:\Users\{}\Miniconda3\envs\CEpy27\python.exe".format(USER)
-SERVER_FILE = r'C:\Users\{}\Documents\Barracuda\BarracudaQt\hardware\MicroControlServer.py'.format(USER)
+PYTHON2_PATH = r"C:\Users\{}\Anaconda3\envs\CEpy27\python.exe".format(USER)
+SERVER_FILE = os.path.join(os.getcwd(), r'MicroManagerProcess\MicroControlServer.py')
+
+
 class MicroControlClient:
-    authkey = b'barracuda'
+    """
+    The client will initiate a second python process that will run Micromanager. Micromanager at this time
+    is only supported in Python2.7. After the Python2 process has been started the
+    MicroControlClient can be used to send commands to the MicroControlServer. The server compares the commands
+    to a dictionary and run the corresponding Micromanager function.
+    # Create the Microcontrol Client
+    >>> mmc = MicroControlClient(port = 6812)
+    >>> mmc.open() # Open creates the python 2 server
+    >>> mmc.send_command(r'camera,get_image\n' ) # Send a command
+    >>> img = mmc.read_response() # Read a response
+    >>> mmc.close() # Close the connection
+
+    """
+    authkey = b'amazingKey'
     server = None # subprocess.Popen object
     conn = None
     def __init__(self, port=5030):
@@ -22,7 +37,7 @@ class MicroControlClient:
         #self.start_server()
 
     def start_connection(self):
-        self.conn = Client(self.address, authkey=b'barracuda')
+        self.conn = Client(self.address, authkey=self.authkey)
 
     def send_command(self, cmd):
         self.conn.send_bytes(pickle.dumps(cmd, 2))
@@ -70,3 +85,7 @@ class MicroControlClient:
             return False
         return True
 
+if __name__== "__main__":
+    SERVER_FILE = r'C:\Users\Luke\Desktop\Luke\MicroManagerProcess\MicroControlServer.py'
+    mcc = MicroControlClient(port=4531)
+    mcc.start_server()

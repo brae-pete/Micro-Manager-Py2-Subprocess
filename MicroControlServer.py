@@ -13,13 +13,14 @@ import numpy as np
 # Server class
 import pickle
 from multiprocessing.connection import Listener
+import matplotlib.pyplot as plt
 import logging
 import os
 cwd = os.getcwd()
 cwd = cwd.split('\\')
 USER = cwd[2]
 def log_output(msg, port, mode = 'a'):
-    with open(r'C:\Users\{}\Documents\Barracuda\BarracudaQt\py2_log-{}.txt'.format(USER,port), mode) as fout:
+    with open(r'py2_log-{}.txt'.format(USER,port), mode) as fout:
         fout.write("{}-{}\n".format(datetime.datetime.now().strftime('%m/%d/%y %H:%M:%S'), msg))
 
 
@@ -27,7 +28,7 @@ class MicroServer:
     """ Server that checks and communicates with the MicroClient. This should be running on the Python2
     process.
     """
-    authkey = b'barracuda'
+    authkey = b'amazingKey'
 
     def __init__(self, port=6070):
         self.address = ('localhost', port)
@@ -92,6 +93,7 @@ class MicroControl:
                                 'start_continuous': self.start_continuous,
                                 'stop_continuous': self.stop_continuous,
                                 'get_last': self.get_last,
+                                'show_last':self.show_last,
                                 'set_exposure': self.set_exposure,
                                 'get_exposure': self.get_exposure,
                                 'get_name': self.get_camera_name}
@@ -201,6 +203,13 @@ class MicroControl:
         if self.mmc.getRemainingImageCount() > 0:
             return self.mmc.getLastImage()
 
+    def show_last(self, args):
+        """ Gets a last image then shows it in matplotlib """
+        img = self.get_last(args)
+        if img is not None:
+            plt.imshow(img)
+        return 'Ok'
+
     def get_obj_position(self, args):
         """Get the current position from the objective (um)
         """
@@ -303,7 +312,7 @@ class MicroControl:
 def main(args):
     logging.warning("Python 2 Subprocess started...")
 
-    with open(r'C:\Users\{}\Documents\Barracuda\BarracudaQt\py2_log.txt'.format(USER), 'a') as fout:
+    with open(r'py2_log.txt'.format(USER), 'a') as fout:
         fout.write("Python 2 started {}\n".format(args))
 
     if len(args) > 1:
